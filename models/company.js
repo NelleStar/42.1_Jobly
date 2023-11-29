@@ -1,11 +1,11 @@
 "use strict";
 
+// require our jobly db,  2 functions from our expressError file, and a function from helpers.sql
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
 const { sqlForPartialUpdate } = require("../helpers/sql");
 
-/** Related functions for companies. */
-
+// Related functions for companies put into a model
 class Company {
   /** Create a company (from data), update db, return new company data.
    *

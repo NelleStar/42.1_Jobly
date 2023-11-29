@@ -1,7 +1,9 @@
+// common test functions that will be imported into each test file to reduce duplication
+// require/import bcrypt, our database, and the work factor from the config file
 const bcrypt = require("bcrypt");
-
 const db = require("../db.js");
-const { BCRYPT_WORK_FACTOR } = require("../config");
+const { SECRET_KEY, PORT, BCRYPT_WORK_FACTOR, getDatabaseUri } = require("../config");
+
 
 async function commonBeforeAll() {
   // noinspection SqlWithoutWhere
@@ -30,19 +32,22 @@ async function commonBeforeAll() {
       ]);
 }
 
+// SQL command that starts a new transaction and held within the transaction block until explicitly commited
 async function commonBeforeEach() {
   await db.query("BEGIN");
 }
 
+// SQL command used to undo or discard changes made that are not committed
 async function commonAfterEach() {
   await db.query("ROLLBACK");
 }
 
+// closes the db connection down to prevent potential resource leaks
 async function commonAfterAll() {
   await db.end();
 }
 
-
+//export these functions for use in specific models test files.
 module.exports = {
   commonBeforeAll,
   commonBeforeEach,
