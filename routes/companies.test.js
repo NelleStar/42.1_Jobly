@@ -108,6 +108,34 @@ describe("GET /companies", function () {
   });
 });
 
+// ========================================================
+describe("GET /companies (with filtering)", function () {
+  test("returns all companies when no filter criteria provided", async function () {
+    const resp = await request(app).get("/companies");
+    expect(resp.statusCode).toEqual(200);
+    expect(resp.body).toHaveProperty("companies");
+  });
+
+  test("returns filtered companies with valid criteria", async function () {
+    const resp = await request(app).get("/companies").query({
+      minEmployees: 1, 
+      maxEmployees: 2, 
+      nameLike: "c",
+    });
+    expect(resp.statusCode).toEqual(200);
+    expect(resp.body).toHaveProperty("companies");
+  });
+
+  test("returns all companies if only one filter criteria is provided", async function () {
+    const resp = await request(app).get("/companies").query({
+      maxEmployees: 2, 
+    });
+    expect(resp.statusCode).toEqual(200);
+    expect(resp.body).toHaveProperty("companies");
+  });
+});
+
+
 /************************************** GET /companies/:handle */
 
 describe("GET /companies/:handle", function () {

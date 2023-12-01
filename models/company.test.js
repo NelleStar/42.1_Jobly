@@ -87,6 +87,66 @@ describe("findAll", function () {
   });
 });
 
+/************************************** filterCompanies */
+describe("filterCompanies", function () {
+  test("works: filter by name", async function () {
+    const filterByName = {
+      name: "C1",
+    };
+    const filteredCompanies = await Company.filterCompanies(filterByName);
+    expect(filteredCompanies).toEqual([
+      {
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      },
+    ]);
+  });
+
+  test("works: filter by minEmployees", async function () {
+    const filterByMinEmployees = {
+      minEmployees: 2,
+    };
+    const filteredCompanies = await Company.filterCompanies(filterByMinEmployees);
+    expect(filteredCompanies).toEqual([
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      },
+      {
+        handle: "c3",
+        name: "C3",
+        description: "Desc3",
+        numEmployees: 3,
+        logoUrl: "http://c3.img",
+      },
+    ]);
+  });
+
+    test("works: filter by min and maxEmployees", async function () {
+    const filterByMinAndMaxEmployees = {
+      minEmployees: 2,
+      maxEmployees: 2,
+    };
+    const filteredCompanies = await Company.filterCompanies(filterByMinAndMaxEmployees);
+    expect(filteredCompanies).toEqual([
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      },
+    ]);
+  });
+  
+});
+
 /************************************** get */
 
 describe("get", function () {
