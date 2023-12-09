@@ -33,7 +33,7 @@
       "type": "boolean"
     }
   },
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "username",
     "firstName",

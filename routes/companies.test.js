@@ -120,7 +120,7 @@ describe("GET /companies (with filtering)", function () {
     const resp = await request(app).get("/companies").query({
       minEmployees: 1, 
       maxEmployees: 2, 
-      nameLike: "c",
+      name: "c",
     });
     expect(resp.statusCode).toEqual(200);
     expect(resp.body).toHaveProperty("companies");

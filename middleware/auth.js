@@ -38,8 +38,25 @@ function ensureLoggedIn(req, res, next) {
   }
 }
 
+// Middleware to use when they must be an admin. If not, raises Forbidden.
+function ensureAdmin(req, res, next) {
+  try {
+    // Check if the user is logged in and has an isAdmin field in the token payload
+    if (!res.locals.user || !res.locals.user.isAdmin) {
+      // If not an admin, throw a new UnauthorizedError
+      throw new UnauthorizedError("Admin access required");
+    }
+    // If admin, proceed to the next middleware or route handler
+    return next();
+
+  } catch (err) {
+    return next(err);
+  }
+}
+
 // export both middleware functions for use in other files
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
+  ensureAdmin,
 };

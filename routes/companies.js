@@ -7,7 +7,7 @@ const jsonschema = require("jsonschema");
 const express = require("express");
 
 const { BadRequestError } = require("../expressError");
-const { ensureLoggedIn } = require("../middleware/auth");
+const { ensureLoggedIn, ensureAdmin } = require("../middleware/auth");
 const Company = require("../models/company");
 
 const companyNewSchema = require("../schemas/companyNew.json");
@@ -16,7 +16,7 @@ const companyUpdateSchema = require("../schemas/companyUpdate.json");
 const router = new express.Router();
 
 // POST / { company } =>  { company } - company should be { handle, name, description, numEmployees, logoUrl }  -Returns { handle, name, description, numEmployees, logoUrl } * Authorization required: login 
-router.post("/", ensureLoggedIn, async function (req, res, next) {
+router.post("/", ensureLoggedIn, ensureAdmin, async function (req, res, next) {
   try {
     // check the request body to validate and set to variable validator
     const validator = jsonschema.validate(req.body, companyNewSchema);
@@ -35,14 +35,14 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
   }
 });
 
-// GET /  => { companies: [ { handle, name, description, numEmployees, logoUrl }, ...] } Can filter on provided search filters: - minEmployees - maxEmployees - nameLike (will find case-insensitive, partial matches) Authorization required: none 
+// GET /  => { companies: [ { handle, name, description, numEmployees, logoUrl }, ...] } Can filter on provided search filters: - minEmployees - maxEmployees - name (will find case-insensitive, partial matches) Authorization required: none 
 router.get("/", async function (req, res, next) {
   try {
     let companies;
-    const { minEmployees, maxEmployees, nameLike } = req.query;
+    const { minEmployees, maxEmployees, name } = req.query;
 
     // Check if any filtering criteria are provided
-    if (minEmployees || maxEmployees || nameLike) {
+    if (minEmployees || maxEmployees || name) {
       const criteria = {};
 
       if (minEmployees !== undefined) {
@@ -51,8 +51,8 @@ router.get("/", async function (req, res, next) {
       if (maxEmployees !== undefined) {
         criteria.maxEmployees = parseInt(maxEmployees, 10);
       }
-      if (nameLike) {
-        criteria.name = nameLike;
+      if (name) {
+        criteria.name = name;
       }
 
       // Call filterCompanies method with the criteria collected
@@ -83,7 +83,7 @@ router.get("/:handle", async function (req, res, next) {
 });
 
 // PATCH /[handle] { fld1, fld2, ... } => { company } Patches company data. fields can be: { name, description, numEmployees, logo_url } Returns { handle, name, description, numEmployees, logo_url } Authorization required: login 
-router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
+router.patch("/:handle", ensureLoggedIn, ensureAdmin, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, companyUpdateSchema);
     if (!validator.valid) {
@@ -100,7 +100,7 @@ router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
 });
 
 // DELETE /[handle]  =>  { deleted: handle } Authorization: login 
-router.delete("/:handle", ensureLoggedIn, async function (req, res, next) {
+router.delete("/:handle", ensureLoggedIn, ensureAdmin, async function (req, res, next) {
   try {
     await Company.remove(req.params.handle);
     return res.json({ deleted: req.params.handle });

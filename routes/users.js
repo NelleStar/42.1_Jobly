@@ -1,37 +1,24 @@
 "use strict";
 
 /** Routes for users. */
-
+// require/import jsonschema, express, middleware, expressError, User model, createToken from helps, newUser and updateuser schemas and express Router
 const jsonschema = require("jsonschema");
-
 const express = require("express");
-const { ensureLoggedIn } = require("../middleware/auth");
+const { ensureLoggedIn, ensureAdmin } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
 const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
-
 const router = express.Router();
 
 
-/** POST / { user }  => { user, token }
- *
- * Adds a new user. This is not the registration endpoint --- instead, this is
- * only for admin users to add new users. The new user being added can be an
- * admin.
- *
- * This returns the newly created user and an authentication token for them:
- *  {user: { username, firstName, lastName, email, isAdmin }, token }
- *
- * Authorization required: login
- **/
-
-router.post("/", ensureLoggedIn, async function (req, res, next) {
+//POST / { user }  => { user, token } Adds a new user. This is not the registration endpoint --- instead, this is only for admin users to add new users. The new user being added can be an admin. * This returns the newly created user and an authentication token for them: {user: { username, firstName, lastName, email, isAdmin }, token } * Authorization required: login
+router.post("/", ensureLoggedIn, ensureAdmin, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userNewSchema);
     if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
+      const errs = validator.errors.map((e) => e.stack);
       throw new BadRequestError(errs);
     }
 
@@ -43,15 +30,8 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
   }
 });
 
-
-/** GET / => { users: [ {username, firstName, lastName, email }, ... ] }
- *
- * Returns list of all users.
- *
- * Authorization required: login
- **/
-
-router.get("/", ensureLoggedIn, async function (req, res, next) {
+//GET / => { users: [ {username, firstName, lastName, email }, ... ] } Returns list of all users. * Authorization required: login 
+router.get("/", ensureLoggedIn, ensureAdmin, async function (req, res, next) {
   try {
     const users = await User.findAll();
     return res.json({ users });
@@ -61,16 +41,20 @@ router.get("/", ensureLoggedIn, async function (req, res, next) {
 });
 
 
-/** GET /[username] => { user }
- *
- * Returns { username, firstName, lastName, isAdmin }
- *
- * Authorization required: login
- **/
-
+// GET /[username] => { user } Returns { username, firstName, lastName, isAdmin } * Authorization required: login 
 router.get("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
-    const user = await User.get(req.params.username);
+    // Extract the username of the requesting user
+    const requestedUsername = req.params.username;
+    const requestingUser = res.locals.user.username;
+
+    // Check if the requesting user is an admin or if it's the same as the requested user
+    if (requestingUser !== requestedUsername && !res.locals.user.isAdmin) {
+      throw new ForbiddenError(
+        "Unauthorized to access this user's information"
+      );
+    }
+    const user = await User.get(requestedUsername);
     return res.json({ user });
   } catch (err) {
     return next(err);
@@ -78,25 +62,21 @@ router.get("/:username", ensureLoggedIn, async function (req, res, next) {
 });
 
 
-/** PATCH /[username] { user } => { user }
- *
- * Data can include:
- *   { firstName, lastName, password, email }
- *
- * Returns { username, firstName, lastName, email, isAdmin }
- *
- * Authorization required: login
- **/
-
+//PATCH /[username] { user } => { user } Data can include: { firstName, lastName, password, email } Returns { username, firstName, lastName, email, isAdmin } * Authorization required: login
 router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
-    const validator = jsonschema.validate(req.body, userUpdateSchema);
-    if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
-      throw new BadRequestError(errs);
-    }
+    // Extract the username of the requesting user
+    const requestedUsername = req.params.username;
+    const requestingUser = res.locals.user.username;
+    const userData = req.body;
 
-    const user = await User.update(req.params.username, req.body);
+    // Check if the requesting user is an admin or if it's the same as the requested user
+    if (requestingUser !== requestedUsername && !res.locals.user.isAdmin) {
+      throw new ForbiddenError(
+        "Unauthorized to update this user's information"
+      );
+    }
+    const user = await User.update(requestedUsername, userData);
     return res.json({ user });
   } catch (err) {
     return next(err);
@@ -104,15 +84,19 @@ router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
 });
 
 
-/** DELETE /[username]  =>  { deleted: username }
- *
- * Authorization required: login
- **/
-
+//DELETE /[username]  =>  { deleted: username } * Authorization required: login
 router.delete("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
-    await User.remove(req.params.username);
-    return res.json({ deleted: req.params.username });
+    // Extract the username of the requesting user
+    const requestedUsername = req.params.username;
+    const requestingUser = res.locals.user.username;
+
+    // Check if the requesting user is an admin or if it's the same as the requested user
+    if (requestingUser !== requestedUsername && !res.locals.user.isAdmin) {
+      throw new ForbiddenError("Unauthorized to delete this user");
+    }
+    await User.remove(requestedUsername);
+    return res.json({ deleted: requestedUsername });
   } catch (err) {
     return next(err);
   }
