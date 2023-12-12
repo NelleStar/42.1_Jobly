@@ -12,6 +12,26 @@ const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
 const router = express.Router();
 
+// POST /users/:username/jobs/:id*** that allows that user to apply for a job (or an admin to do it for them). That route should return JSON like: `{ applied: jobId }`
+router.post('/:username/jobs/:id', async (req, res, next) => {
+  const {username, id} = req.params;
+
+  try {
+    // save the username to a var for easy access, if no user with that username sent error
+    const user = await User.get(username);
+    if(!user) {
+      return res.status(404).json({ error: `User ${username} not found` });
+    }
+
+    // use the apply method made in the User model
+    await User.applyForJob(username, parseInt(id));
+
+    // return success
+    return res.status(200).json({ applied: parseInt(id) });
+  } catch(err) {
+    return next(err)
+  }
+})
 
 //POST / { user }  => { user, token } Adds a new user. This is not the registration endpoint --- instead, this is only for admin users to add new users. The new user being added can be an admin. * This returns the newly created user and an authentication token for them: {user: { username, firstName, lastName, email, isAdmin }, token } * Authorization required: login
 router.post("/", ensureLoggedIn, ensureAdmin, async function (req, res, next) {

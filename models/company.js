@@ -126,10 +126,23 @@ class Company {
            FROM companies
            WHERE handle = $1`,
         [handle]);
-
+      
     // take the result and set it to the company variable - If the company was not found throw an error else return the company
     const company = companyRes.rows[0];
     if (!company) throw new NotFoundError(`No company: ${handle}`);
+
+    // create an array of job object instances
+    const jobsRes = await db.query(
+      `SELECT id,
+              title,
+              salary,
+              equity
+      FROM jobs
+      WHERE company_handle = $1`,
+      [handle]
+    );
+    company.jobs = jobsRes.rows;
+    
     return company;
   }
 
