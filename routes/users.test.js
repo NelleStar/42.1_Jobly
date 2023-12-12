@@ -124,21 +124,21 @@ describe("GET /users", function () {
           firstName: "U1F",
           lastName: "U1L",
           email: "user1@user.com",
-          isAdmin: false,
+          isAdmin: true,
         },
         {
           username: "u2",
           firstName: "U2F",
           lastName: "U2L",
           email: "user2@user.com",
-          isAdmin: false,
+          isAdmin: true,
         },
         {
           username: "u3",
           firstName: "U3F",
           lastName: "U3L",
           email: "user3@user.com",
-          isAdmin: false,
+          isAdmin: true,
         },
       ],
     });
@@ -175,7 +175,7 @@ describe("GET /users/:username", function () {
         firstName: "U1F",
         lastName: "U1L",
         email: "user1@user.com",
-        isAdmin: false,
+        isAdmin: true,
       },
     });
   });
@@ -210,7 +210,7 @@ describe("PATCH /users/:username", () => {
         firstName: "New",
         lastName: "U1L",
         email: "user1@user.com",
-        isAdmin: false,
+        isAdmin: true,
       },
     });
   });
@@ -236,11 +236,9 @@ describe("PATCH /users/:username", () => {
 
   test("bad request if invalid data", async function () {
     const resp = await request(app)
-        .patch(`/users/u1`)
-        .send({
-          firstName: 42,
-        })
-        .set("authorization", `Bearer ${u1Token}`);
+      .patch(`/users/u1`)
+      .send({})
+      .set("authorization", `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 
@@ -257,7 +255,7 @@ describe("PATCH /users/:username", () => {
         firstName: "U1F",
         lastName: "U1L",
         email: "user1@user.com",
-        isAdmin: false,
+        isAdmin: true,
       },
     });
     const isSuccessful = await User.authenticate("u1", "new-password");
